@@ -1,0 +1,52 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion rootProject.android.compileSdkVersion
+    buildToolsVersion rootProject.android.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion rootProject.android.minSdkVersion
+        targetSdkVersion rootProject.android.targetSdkVersion
+        versionCode rootProject.android.versionCode
+        versionName rootProject.android.versionName
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    api deps.annotation
+    api deps.appcompat_v7
+    api deps.constraint_layout
+    api deps.recyclerview
+    api deps.cardview
+    api deps.design
+    api deps.gson
+    api deps.glide
+    api deps.rxjava
+    api deps.rxandroid
+    api deps.okhttp
+    api deps.logging_interceptor
+    api deps.retrofit
+    api(deps.converter_gson) {
+        exclude group: 'com.google.code.gson', module: 'gson'
+    }
+    api deps.lifecycle_exts
+    api deps.lifecycle_j8
+    api deps.dagger
+    api deps.dagger_android
+    api deps.dagger_android_s
+    testImplementation deps.junit
+    androidTestImplementation deps.runner
+    androidTestImplementation deps.espresso
+}

@@ -1,0 +1,161 @@
+apply plugin: 'com.android.application'
+
+//Uncomment 3 following plugins if kotlin is implemented
+//apply plugin: 'kotlin-android'
+//
+//apply plugin: 'kotlin-android-extensions'
+//
+//apply plugin: 'kotlin-kapt'
+android {
+    compileSdkVersion rootProject.android.compileSdkVersion
+    buildToolsVersion rootProject.android.buildToolsVersion
+
+    defaultConfig {
+        applicationId "net.bingyan.app"
+        minSdkVersion rootProject.android.minSdkVersion
+        targetSdkVersion rootProject.android.targetSdkVersion
+        versionCode rootProject.android.versionCode
+        versionName createVersionName()
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++14 -frtti -fexceptions"
+            }
+        }
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = ["room.schemaLocation":
+                                     "$projectDir/room_schemas".toString()]
+            }
+        }
+
+    }
+    signingConfigs {
+        debug {
+            storeFile file("./debug.keystore")
+        }
+        release {
+            storeFile file("./bingyan.jks")
+            storePassword "87542701"
+            keyAlias "bingyan"
+            keyPassword "87542701"
+        }
+    }
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix ".debug"
+            debuggable true
+            signingConfig signingConfigs.debug
+            ndk {
+                abiFilters "armeabi", "x86_64"
+            }
+            adbOptions {
+                installOptions "-r"
+            }
+        }
+        release {
+            versionNameSuffix ".release"
+            zipAlignEnabled true
+            postprocessing {
+                removeUnusedCode true
+                removeUnusedResources true
+                obfuscate true
+                optimizeCode true
+                proguardFiles file('../proguards').listFiles(new FilenameFilter() {
+                    @Override
+                    boolean accept(File dir, String name) {
+                        boolean validate = name.endsWith('pro')
+                        if (validate) {
+                            println 'use proguard rules: ' + name
+                        }
+                        return validate
+                    }
+                })
+            }
+            signingConfig signingConfigs.release
+            ndk {
+                abiFilters "armeabi", "armeabi-v7a", "arm64-v8a"
+            }
+        }
+    }
+    flavorDimensions 'default'
+
+    productFlavors {
+        mock {
+            dimension 'default'
+            applicationIdSuffix 'mock'
+            versionNameSuffix 'mock'
+        }
+        prod {
+            dimension 'default'
+        }
+    }
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def outputFile = output.outputFile
+            if (outputFile != null && outputFile.name.endsWith("apk")) {
+                outputFileName = "${variant.applicationId}.${variant.versionName}.apk"
+            }
+        }
+    }
+//    externalNativeBuild {
+//        cmake {
+//            path "CMakeLists.txt"
+//        }
+//    }
+
+    sourceSets {
+        main {
+            java.srcDirs = ['src/main/java']
+        }
+        mock {
+            java.srcDirs = ['src/mock/java']
+        }
+        prod {
+            java.srcDirs = ['src/prod/java']
+        }
+    }
+    compileOptions {
+        targetCompatibility rootProject.android.targetCompatibilityVersion
+        sourceCompatibility rootProject.android.sourceCompatibilityVersion
+        incremental true
+        encoding "utf-8"
+    }
+
+}
+
+String createVersionName() {
+    def versionCode = rootProject.android.versionCode
+    def branchName = 'git symbolic-ref --short -q HEAD'.execute().text.trim()
+    def sha1 = 'git rev-parse --short HEAD'.execute().text.trim()
+    def count = 'git rev-list --count HEAD'.execute([], project.rootDir).text.trim()
+    if (count.isEmpty()) {
+        count='0'
+    }
+    def time = new Date().format('yyMMddHHmm').trim()
+    return new StringBuilder().append(versionCode).append('.')
+            .append(branchName).append('.')
+            .append(Integer.parseInt(count)+100).append('.')
+            .append(time).append('.')
+            .append(sha1).toString()
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+//    Uncomment 2 following linesannotationProcessor if your project contains kotlin code
+//    implementation deps.kotlin
+//    implementation deps.anko
+
+//    Uncomment 2 following lines if dagger2 is implemented in your project,
+//    and replace 'annotationProcessor' with 'kapt' if kotlin is used.
+    annotationProcessor deps.dagger_processor
+    annotationProcessor deps.dagger_android_p
+
+    testImplementation deps.junit
+    androidTestImplementation deps.runner
+    androidTestImplementation deps.espresso
+    implementation project(':common')
+}
+
+
